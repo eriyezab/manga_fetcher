@@ -1,7 +1,11 @@
 import urllib.request
 import cfscrape #this module allows me to bypass the cloudfare anti bot page
 from bs4 import BeautifulSoup
+import os
+import requests
+import io
 from zipfile import ZipFile
+from appurlopener import AppURLopener
 
 
 class Manga:
@@ -15,6 +19,7 @@ class Manga:
     name: str
     url: str
     latest_chapter_url: str
+    latest_chapter: str
 
     def __init__(self, name: str, url: str, latest_chapter_url: str='') -> bool:
         """Initaialize the manga with the name of the manga as name and
@@ -28,7 +33,7 @@ class Manga:
             self.latest_chapter_url = self.retrieve_latest_chapter_url()
         else:
             self.latest_chapter_url = latest_chapter_url
-            print('Incorrect Manga URL.')
+        self.latest_chapter = self.latest_chapter_url.split('/')[-1]
 
     def retrieve_latest_chapter_url(self) -> str:
         """retrieve the latest chapter url number from the website
@@ -42,17 +47,28 @@ class Manga:
     
     def check_new_release(self) -> bool:
         """Check whether there was a new release or not. If there was then
-        download it into the folder dedicated to the manga.
+        download it into the folder dedicated to the manga. After downloading it,
+        unpack the zip file.
         """
+        dir_path = os.getcwd() + '/manga/' + self.name + '/'
+        file_path = dir_path + self.latest_chapter + '.zip'
         if self.retrieve_latest_chapter_url() == self.latest_chapter_url:
             return False
         else:
             self.latest_chapter_url = self.retrieve_latest_chapter_url()
-            urllib.request.urlretrieve(self.latest_chapter_url, './manga/' + self.name)
+            if not os.path.exists(dir_path):
+                os.mkdir(dir_path)
+            scraper = cfscrape.create_scraper()
+            chapter = scraper.get(self.latest_chapter_url)
+            open(file_path, 'wb').write(chapter.content)
+            os.chdir(dir_path)
+            with ZipFile(file_path, 'r') as zipObj:
+                zipObj.extractall()
             return True
 
 
 
 if __name__ == '__main__':
-    NARUTO = Manga('Naruto', "https://w10.mangafreak.net/Manga/Naruto")
+    NARUTO = Manga('Naruto', "https://w10.mangafreak.net/Manga/Naruto",
+                   "http://images.mangafreak.net:8080/download/Naruto_699")
     print(NARUTO.check_new_release())
