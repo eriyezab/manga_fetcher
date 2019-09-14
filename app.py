@@ -1,33 +1,27 @@
 import os 
 import shutil
 import csv
-from manga import Manga
-
-
-# ONE_PIECE = "https://w10.mangafreak.net/Manga/One_Piece"
-# BLACK_CLOVER = "https://w10.mangafreak.net/Manga/Black_Clover"
-# ATTACK_ON_TITAN = "https://w10.mangafreak.net/Manga/Shingeki_No_Kyojin"
-# ONE_PUNCH_MAN = "https://w10.mangafreak.net/Manga/Onepunch_Man"
-# HUNTER_X_HUNTER = "https://w10.mangafreak.net/Manga/Hunter_X_Hunter"
-
-EMAIL_ADDRESS = 'izer.buwembo@gmail.com'
-EMAIL_PASSWORD = '12345678'
-
 import smtplib
 from email.message import EmailMessage
 import imghdr
+from manga import Manga
+
+
+EMAIL_ADDRESS = os.environ.get('EMAIL_ADDRESS')
+EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+
+
 
 def start(data_file: str) -> list:
     """This function is to be run at the start of the execution. It will retrieve information from
     the csv file and create the Manga instances with that information and return them in a list.
     """
     with open(data_file, 'r') as csv_file1:
-        csv_reader = csv.reader(csv_file1)
-        next(csv_reader)
+        csv_reader = csv.DictReader(csv_file1)
         list_of_mangas = []
 
         for line1 in csv_reader:
-            new_manga = Manga(line1[0], line1[1], line1[2])
+            new_manga = Manga(line1['name'], line1['url'], line1['latest_chapter_url'])
             list_of_mangas.append(new_manga)
 
         return list_of_mangas
@@ -41,21 +35,33 @@ def send_email(recipient: dict, manga: Manga) -> None:
     msg['From'] = EMAIL_ADDRESS
     msg['To'] = recipient['email']
 
-    pages = [i for i in os.listdir(manga.folder) if os.path.isfile(os.path.join(manga.folder, i)) and '.jpg' in i]
-    pages.sort()
-    print(pages)
-    # content = 
-    # msg.set_content()
-    # with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-    #     smtp.login(EMAIL_ADDRESS, PASSWORD)
-    #     smtp.send_message(msg)
+    pages = [(int(i.split('_')[-1].split('.')[0]), i) for i in os.listdir(manga.folder) if os.path.isfile(os.path.join(manga.folder, i)) and '.jpg' in i]
+    pages.sort(key=lambda tup: tup[0])
+    
+    msg.set_content(manga.latest_chapter + 'attached')
+    for page in pages:
+        with open(os.path.join(manga.folder, page[1]), 'rb') as f:
+            file_data = f.read()
+            file_type = imghdr.what(f.name)
+            file_name = f.name
+
+        msg.add_attachment(file_data, maintype='image', subtype=file_type, filename=file_name)
+
+    with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
+        smtp.ehlo()
+        smtp.starttls()
+        smtp.ehlo()
+
+        smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        smtp.send_message(msg)
 
 
-def refresh(mangas: list) -> None:
+def refresh(mangas: list, data: str) -> None:
     """ Goes through every directory in './manga/' and deletes all the files.
     This gets rid of all zip files and image files of any manga chapter. It then 
     writes the values of the new latest_chapter_url's to the csv file"""
-    folder = '/manga'
+    # clear all the mangas that were downloaded in the manga folder
+    folder = './manga'
     for the_file in os.listdir(folder):
         file_path = os.path.join(folder, the_file)
         try:
@@ -66,14 +72,24 @@ def refresh(mangas: list) -> None:
         except Exception as e:
             print(e)
 
+    # update data.csv for the new chapter urls
+    with open(os.path.join(os.getcwd(),'new_' + data), 'w') as wf:
+        fieldnames = ['name', 'url', 'latest_chapter_url']
+
+        csv_writer = csv.DictWriter(wf, fieldnames=fieldnames, delimiter=",")
+
+        csv_writer.writeheader()
+        for manga in mangas:
+            line = manga.name + ',' + manga.url + ',' + manga.latest_chapter_url
+            csv_writer.writerow(line)
+
 if __name__ == "__main__":
     MANGAS = start('data.csv')
     RECIPIENTS = {}
     with open('email_list.csv', 'r') as csv_file2:
-        CSV_READER = csv.reader(csv_file2)
-        next(CSV_READER)
+        CSV_READER = csv.DictReader(csv_file2)
         for line2 in CSV_READER:
-            RECIPIENTS[line2[0]] = {'email' :line2[0], 'first_name' : line2[1], 'last_name': line2[2]}
+            RECIPIENTS[line2['email']] = {'email' :line2['email'], 'first_name' : line2['firstname'], 'last_name': line2['lastname']}
 
     NEW_RELEASES = []
     for anime in MANGAS:
@@ -83,6 +99,6 @@ if __name__ == "__main__":
         for new_release in NEW_RELEASES:
             send_email(RECIPIENTS[recipient], new_release)
 
-    refresh(MANGAS)
+    refresh(MANGAS, 'data.csv')
             
     
