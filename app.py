@@ -26,14 +26,14 @@ def start(data_file: str) -> list:
 
         return list_of_mangas
 
-def send_email(recipient: dict, manga: Manga) -> None:
-    """ This function takes a recipient({email: (firstname, lastname)}) and the manga that had a new release and
-    sends the recipient the manga chapter.
+def send_email(person: dict, manga: Manga) -> None:
+    """ This function takes a person({email: (firstname, lastname)}) and the manga that had a new release and
+    sends the person the manga chapter.
     """
     msg = EmailMessage()
     msg['Subject'] = manga.latest_chapter
     msg['From'] = EMAIL_ADDRESS
-    msg['To'] = recipient['email']
+    msg['To'] = person['email']
 
     pages = [(int(i.split('_')[-1].split('.')[0]), i) for i in os.listdir(manga.folder) if os.path.isfile(os.path.join(manga.folder, i)) and '.jpg' in i]
     pages.sort(key=lambda tup: tup[0])
@@ -83,21 +83,34 @@ def refresh(mangas: list, data: str) -> None:
             csv_writer.writerow({fieldnames[0]: manga.name, fieldnames[1]: manga.url, fieldnames[2]: manga.latest_chapter_url})
 
 if __name__ == "__main__":
+    # on the first run of the program, the manga folder needs to be created
+    if not os.path.exists('./manga'):
+        os.mkdir('./manga')
+    
+    # read the manga information stored in the csv file 'data.cs'
     MANGAS = start('data.csv')
+    # read the recipient information from 'email_list.csv' and store it into a dictionary
+    # with the recipients email as the key
     RECIPIENTS = {}
     with open('email_list.csv', 'r') as csv_file2:
         CSV_READER = csv.DictReader(csv_file2)
         for line2 in CSV_READER:
             RECIPIENTS[line2['email']] = {'email' :line2['email'], 'first_name' : line2['firstname'], 'last_name': line2['lastname']}
 
+    # find out whether any of the mangas have a new release and store the ones that do into
+    # a list
     NEW_RELEASES = []
     for anime in MANGAS:
         if anime.check_new_release():
             NEW_RELEASES.append(anime)
+
+    # loop through the recipients and send all new releases to each one
     for recipient in RECIPIENTS:
         for new_release in NEW_RELEASES:
             send_email(RECIPIENTS[recipient], new_release)
 
+    # update 'data.cs' so that it contains the new chapters that were released if any
+    # and then delete everything inside the manga folder
     refresh(MANGAS, 'data.csv')
             
     

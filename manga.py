@@ -68,7 +68,7 @@ class Manga:
 
 
 
-if __name__ == '__main__':
-    NARUTO = Manga('Naruto', "https://w10.mangafreak.net/Manga/Naruto",
-                   "http://images.mangafreak.net:8080/download/Naruto_699")
-    print(NARUTO.check_new_release())
+# if __name__ == '__main__':
+#     NARUTO = Manga('Naruto', "https://w10.mangafreak.net/Manga/Naruto",
+#                    "http://images.mangafreak.net:8080/download/Naruto_699")
+#     print(NARUTO.check_new_release())
