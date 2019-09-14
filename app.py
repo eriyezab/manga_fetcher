@@ -2,7 +2,6 @@ import os
 import shutil
 import csv
 import smtplib
-import ssl
 from email.message import EmailMessage
 import imghdr
 from manga import Manga
