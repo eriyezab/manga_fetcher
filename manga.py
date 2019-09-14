@@ -1,11 +1,8 @@
-import urllib.request
-import cfscrape #this module allows me to bypass the cloudfare anti bot page
-from bs4 import BeautifulSoup
 import os
-import requests
-import io
 from zipfile import ZipFile
-from appurlopener import AppURLopener
+import cfscrape  # this module allows me to bypass the cloudfare anti bot page
+from bs4 import BeautifulSoup
+
 
 
 class Manga:
@@ -20,6 +17,7 @@ class Manga:
     url: str
     latest_chapter_url: str
     latest_chapter: str
+    folder: str
 
     def __init__(self, name: str, url: str, latest_chapter_url: str='') -> bool:
         """Initaialize the manga with the name of the manga as name and
@@ -34,6 +32,7 @@ class Manga:
         else:
             self.latest_chapter_url = latest_chapter_url
         self.latest_chapter = self.latest_chapter_url.split('/')[-1]
+        self.folder = os.getcwd() + '/manga/' + self.name + '/'
 
     def retrieve_latest_chapter_url(self) -> str:
         """retrieve the latest chapter url number from the website
@@ -44,27 +43,29 @@ class Manga:
         soup = BeautifulSoup(website, 'lxml')
         chapter = soup.find_all('tr')[-1].find_all('a')[-1].get('href')
         return chapter
-    
+
     def check_new_release(self) -> bool:
         """Check whether there was a new release or not. If there was then
         download it into the folder dedicated to the manga. After downloading it,
         unpack the zip file.
         """
-        dir_path = os.getcwd() + '/manga/' + self.name + '/'
-        file_path = dir_path + self.latest_chapter + '.zip'
         if self.retrieve_latest_chapter_url() == self.latest_chapter_url:
             return False
-        else:
-            self.latest_chapter_url = self.retrieve_latest_chapter_url()
-            if not os.path.exists(dir_path):
-                os.mkdir(dir_path)
-            scraper = cfscrape.create_scraper()
-            chapter = scraper.get(self.latest_chapter_url)
-            open(file_path, 'wb').write(chapter.content)
-            os.chdir(dir_path)
-            with ZipFile(file_path, 'r') as zipObj:
-                zipObj.extractall()
-            return True
+
+        
+        file_path = self.folder + self.latest_chapter + '.zip'
+        self.latest_chapter_url = self.retrieve_latest_chapter_url()
+        if not os.path.exists(self.folder):
+            os.mkdir(self.folder)
+        scraper = cfscrape.create_scraper()
+        chapter = scraper.get(self.latest_chapter_url)
+        open(file_path, 'wb').write(chapter.content)
+        current_path = os.getcwd()
+        os.chdir(self.folder)
+        with ZipFile(file_path, 'r') as zip_obj:
+            zip_obj.extractall()
+        os.chdir(current_path)
+        return True
 
 
 
