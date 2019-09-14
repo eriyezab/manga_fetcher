@@ -2,6 +2,7 @@ import os
 import shutil
 import csv
 import smtplib
+import ssl
 from email.message import EmailMessage
 import imghdr
 from manga import Manga
@@ -38,14 +39,14 @@ def send_email(recipient: dict, manga: Manga) -> None:
     pages = [(int(i.split('_')[-1].split('.')[0]), i) for i in os.listdir(manga.folder) if os.path.isfile(os.path.join(manga.folder, i)) and '.jpg' in i]
     pages.sort(key=lambda tup: tup[0])
     
-    msg.set_content(manga.latest_chapter + 'attached')
+    msg.set_content(manga.latest_chapter + ' attached')
     for page in pages:
         with open(os.path.join(manga.folder, page[1]), 'rb') as f:
             file_data = f.read()
             file_type = imghdr.what(f.name)
             file_name = f.name
 
-        msg.add_attachment(file_data, maintype='image', subtype=file_type, filename=file_name)
+        msg.add_attachment(file_data, maintype='image', subtype=file_type, filename=os.path.basename(file_name))
 
     with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
         smtp.ehlo()
@@ -73,15 +74,14 @@ def refresh(mangas: list, data: str) -> None:
             print(e)
 
     # update data.csv for the new chapter urls
-    with open(os.path.join(os.getcwd(),'new_' + data), 'w') as wf:
+    with open(os.path.join(os.getcwd(), data), 'w') as f:
         fieldnames = ['name', 'url', 'latest_chapter_url']
 
-        csv_writer = csv.DictWriter(wf, fieldnames=fieldnames, delimiter=",")
+        csv_writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=",")
 
         csv_writer.writeheader()
         for manga in mangas:
-            line = manga.name + ',' + manga.url + ',' + manga.latest_chapter_url
-            csv_writer.writerow(line)
+            csv_writer.writerow({fieldnames[0]: manga.name, fieldnames[1]: manga.url, fieldnames[2]: manga.latest_chapter_url})
 
 if __name__ == "__main__":
     MANGAS = start('data.csv')

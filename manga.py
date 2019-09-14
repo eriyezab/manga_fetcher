@@ -52,9 +52,8 @@ class Manga:
         if self.retrieve_latest_chapter_url() == self.latest_chapter_url:
             return False
 
-        
-        file_path = self.folder + self.latest_chapter + '.zip'
         self.latest_chapter_url = self.retrieve_latest_chapter_url()
+        file_path = self.folder + self.latest_chapter + '.zip'
         if not os.path.exists(self.folder):
             os.mkdir(self.folder)
         scraper = cfscrape.create_scraper()
