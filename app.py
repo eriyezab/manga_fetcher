@@ -12,11 +12,11 @@ EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 
 
 
-def start(data_file: str) -> list:
+def start(manga_csv: str, contact_csv: str) -> list:
     """This function is to be run at the start of the execution. It will retrieve information from
     the csv file and create the Manga instances with that information and return them in a list.
     """
-    with open(data_file, 'r') as csv_file1:
+    with open(manga_csv, 'r') as csv_file1:
         csv_reader = csv.DictReader(csv_file1)
         list_of_mangas = []
 
@@ -24,7 +24,16 @@ def start(data_file: str) -> list:
             new_manga = Manga(line1['name'], line1['url'], line1['latest_chapter_url'])
             list_of_mangas.append(new_manga)
 
-        return list_of_mangas
+    # read the recipient information from contact_csv and store it into a dictionary
+    # with the recipients email as the key
+    contact_dict = {}
+    with open(contact_csv, 'r') as contacts:
+        csv_reader = csv.DictReader(contacts)
+        for contact in csv_reader:
+            contact_dict[contact['email']] = {
+                'email': contact['email'], 'first_name': contact['firstname'], 'last_name': contact['lastname']}
+                
+    return list_of_mangas, contact_dict
 
 def send_email(person: dict, manga: Manga) -> None:
     """ This function takes a person({email: (firstname, lastname)}) and the manga that had a new release and
@@ -60,7 +69,7 @@ def send_email(person: dict, manga: Manga) -> None:
 
 def refresh(mangas: list, data: str) -> None:
     """ Goes through every directory in './manga/' and deletes all the files.
-    This gets rid of all zip files and image files of any manga chapter. It then 
+    This gets rid of all zip files and image files of any manga chapter. It then
     writes the values of the new latest_chapter_url's to the csv file"""
     # clear all the mangas that were downloaded in the manga folder
     folder = './manga'
@@ -90,17 +99,12 @@ if __name__ == "__main__":
         os.mkdir('./manga')
 
     MANGA_INFO = './data.csv'
+    CONTACT_INFO = './email_list.csv'
     
-    # read the manga information stored in the csv file 'data.cs'
-    MANGAS = start(MANGA_INFO)
-    # read the recipient information from 'email_list.csv' and store it into a dictionary
-    # with the recipients email as the key
-    RECIPIENTS = {}
-    with open('email_list.csv', 'r') as csv_file2:
-        CSV_READER = csv.DictReader(csv_file2)
-        for line2 in CSV_READER:
-            RECIPIENTS[line2['email']] = {'email' :line2['email'], 'first_name' : line2['firstname'], 'last_name': line2['lastname']}
-
+    # read the manga information stored in the csv file MANGA_INFO and the contact information in CONTACT_INFO 
+    # and store the information returned into variables
+    MANGAS, RECIPIENTS = start(MANGA_INFO, CONTACT_INFO)
+    
     # find out whether any of the mangas have a new release and store the ones that do into
     # a list
     NEW_RELEASES = []
@@ -119,5 +123,3 @@ if __name__ == "__main__":
     # update 'data.cs' so that it contains the new chapters that were released if any
     # and then delete everything inside the manga folder
     refresh(MANGAS, MANGA_INFO)
-            
-    
