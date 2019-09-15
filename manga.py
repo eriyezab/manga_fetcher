@@ -67,6 +67,11 @@ class Manga:
         print(f'There was a new release for {self.name}. Retrieved {self.latest_chapter}')
         return True
 
+    def __str__(self) -> str:
+        """ The string representation of the Manga class.
+        """
+        return self.name
+
 
 
 # if __name__ == '__main__':

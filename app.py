@@ -30,10 +30,11 @@ def send_email(person: dict, manga: Manga) -> None:
     """ This function takes a person({email: (firstname, lastname)}) and the manga that had a new release and
     sends the person the manga chapter.
     """
+    receiver = person['email']
     msg = EmailMessage()
     msg['Subject'] = manga.latest_chapter
     msg['From'] = EMAIL_ADDRESS
-    msg['To'] = person['email']
+    msg['To'] = receiver
 
     pages = [(int(i.split('_')[-1].split('.')[0]), i) for i in os.listdir(manga.folder) if os.path.isfile(os.path.join(manga.folder, i)) and '.jpg' in i]
     pages.sort(key=lambda tup: tup[0])
@@ -54,7 +55,7 @@ def send_email(person: dict, manga: Manga) -> None:
 
         smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
         smtp.send_message(msg)
-        print(f'Sent email to {person['email']} containing {manga.latest_chapter}.')
+        print(f'Sent email to {receiver} containing {manga.latest_chapter}.')
 
 
 def refresh(mangas: list, data: str) -> None:
@@ -109,6 +110,9 @@ if __name__ == "__main__":
     for recipient in RECIPIENTS:
         for new_release in NEW_RELEASES:
             send_email(RECIPIENTS[recipient], new_release)
+        else:
+            print('No new chapters have been released.')
+            break
 
     # update 'data.cs' so that it contains the new chapters that were released if any
     # and then delete everything inside the manga folder
