@@ -1,4 +1,5 @@
 import os
+import sys
 from zipfile import ZipFile
 import cfscrape  # this module allows me to bypass the cloudfare anti bot page
 from bs4 import BeautifulSoup
@@ -32,7 +33,7 @@ class Manga:
         else:
             self.latest_chapter_url = latest_chapter_url
         self.latest_chapter = self.latest_chapter_url.split('/')[-1]
-        self.folder = os.getcwd() + '/manga/' + self.name + '/'
+        self.folder = os.path.join(sys.path[0], 'manga/' + self.name + '/')
 
     def retrieve_latest_chapter_url(self) -> str:
         """retrieve the latest chapter url number from the website
@@ -53,13 +54,14 @@ class Manga:
             return False
 
         self.latest_chapter_url = self.retrieve_latest_chapter_url()
+        self.latest_chapter = self.latest_chapter_url.split('/')[-1]
         file_path = self.folder + self.latest_chapter + '.zip'
         if not os.path.exists(self.folder):
             os.mkdir(self.folder)
         scraper = cfscrape.create_scraper()
         chapter = scraper.get(self.latest_chapter_url)
         open(file_path, 'wb').write(chapter.content)
-        current_path = os.getcwd()
+        current_path = sys.path[0]
         os.chdir(self.folder)
         with ZipFile(file_path, 'r') as zip_obj:
             zip_obj.extractall()

@@ -1,4 +1,5 @@
-import os 
+import os
+import sys
 import shutil
 import csv
 import smtplib
@@ -9,7 +10,6 @@ from manga import Manga
 
 EMAIL_ADDRESS = os.environ.get('EMAIL_ADDRESS')
 EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
-
 
 
 def start(manga_csv: str, contact_csv: str) -> list:
@@ -72,7 +72,7 @@ def refresh(mangas: list, data: str) -> None:
     This gets rid of all zip files and image files of any manga chapter. It then
     writes the values of the new latest_chapter_url's to the csv file"""
     # clear all the mangas that were downloaded in the manga folder
-    folder = './manga'
+    folder = os.path.join(sys.path[0], 'manga/')
     for the_file in os.listdir(folder):
         file_path = os.path.join(folder, the_file)
         try:
@@ -84,7 +84,7 @@ def refresh(mangas: list, data: str) -> None:
             print(e)
 
     # update data.csv for the new chapter urls
-    with open(os.path.join(os.getcwd(), data), 'w') as f:
+    with open(os.path.join(sys.path[0], data), 'w') as f:
         fieldnames = ['name', 'url', 'latest_chapter_url']
 
         csv_writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=",")
@@ -94,16 +94,19 @@ def refresh(mangas: list, data: str) -> None:
             csv_writer.writerow({fieldnames[0]: manga.name, fieldnames[1]: manga.url, fieldnames[2]: manga.latest_chapter_url})
 
 if __name__ == "__main__":
+    CURRENT_PATH = sys.path[0]
     # on the first run of the program, the manga folder needs to be created
-    if not os.path.exists('./manga'):
-        os.mkdir('./manga')
+    if not os.path.exists(os.path.join(CURRENT_PATH, 'manga/')):
+        os.mkdir(os.path.join(CURRENT_PATH, 'manga/'))
 
-    MANGA_INFO = './data.csv'
-    CONTACT_INFO = './email_list.csv'
+    MANGA_INFO = 'data.csv'
+    CONTACT_INFO = 'email_list.csv'
     
     # read the manga information stored in the csv file MANGA_INFO and the contact information in CONTACT_INFO 
     # and store the information returned into variables
-    MANGAS, RECIPIENTS = start(MANGA_INFO, CONTACT_INFO)
+    MANGAS, RECIPIENTS = start(os.path.join(
+        CURRENT_PATH, MANGA_INFO), os.path.join(
+        CURRENT_PATH, CONTACT_INFO))
     
     # find out whether any of the mangas have a new release and store the ones that do into
     # a list
