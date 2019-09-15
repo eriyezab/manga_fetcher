@@ -88,9 +88,11 @@ if __name__ == "__main__":
     # on the first run of the program, the manga folder needs to be created
     if not os.path.exists('./manga'):
         os.mkdir('./manga')
+
+    MANGA_INFO = './data.csv'
     
     # read the manga information stored in the csv file 'data.cs'
-    MANGAS = start('data.csv')
+    MANGAS = start(MANGA_INFO)
     # read the recipient information from 'email_list.csv' and store it into a dictionary
     # with the recipients email as the key
     RECIPIENTS = {}
@@ -108,14 +110,14 @@ if __name__ == "__main__":
 
     # loop through the recipients and send all new releases to each one
     for recipient in RECIPIENTS:
-        for new_release in NEW_RELEASES:
-            send_email(RECIPIENTS[recipient], new_release)
-        else:
+        if NEW_RELEASES == []:
             print('No new chapters have been released.')
             break
-
+        for new_release in NEW_RELEASES:
+            send_email(RECIPIENTS[recipient], new_release)
+        
     # update 'data.cs' so that it contains the new chapters that were released if any
     # and then delete everything inside the manga folder
-    refresh(MANGAS, 'data.csv')
+    refresh(MANGAS, MANGA_INFO)
             
     
