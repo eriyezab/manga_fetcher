@@ -64,6 +64,7 @@ class Manga:
         with ZipFile(file_path, 'r') as zip_obj:
             zip_obj.extractall()
         os.chdir(current_path)
+        print(f'There was a new release for {self.name}. Retrieved {self.latest_chapter}')
         return True
 
 

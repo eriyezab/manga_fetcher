@@ -54,6 +54,7 @@ def send_email(person: dict, manga: Manga) -> None:
 
         smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
         smtp.send_message(msg)
+        print(f'Sent email to {person['email']} containing {manga.latest_chapter}.')
 
 
 def refresh(mangas: list, data: str) -> None:
