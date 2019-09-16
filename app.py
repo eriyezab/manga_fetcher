@@ -99,7 +99,7 @@ if __name__ == "__main__":
     if not os.path.exists(os.path.join(CURRENT_PATH, 'manga/')):
         os.mkdir(os.path.join(CURRENT_PATH, 'manga/'))
 
-    MANGA_INFO = 'data.csv'
+    MANGA_INFO = 'manga_list.csv'
     CONTACT_INFO = 'email_list.csv'
     
     # read the manga information stored in the csv file MANGA_INFO and the contact information in CONTACT_INFO 
