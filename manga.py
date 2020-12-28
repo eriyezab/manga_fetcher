@@ -4,7 +4,6 @@ from zipfile import ZipFile
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
-import lxml
 import time
 import requests
 
