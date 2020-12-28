@@ -1,9 +1,12 @@
 import os
 import sys
 from zipfile import ZipFile
-import cfscrape  # this module allows me to bypass the cloudfare anti bot page
 from bs4 import BeautifulSoup
-
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+import lxml
+import time
+import requests
 
 
 class Manga:
@@ -26,6 +29,14 @@ class Manga:
         and set the latest chapter to latest chapter and return the number of the
         latest chapter. This checks for valid url's
         """
+        # set up the webdriver for scraping
+        options = webdriver.ChromeOptions()
+        options.add_argument("--ignore-certificate-errors")
+        options.add_argument("--incognito")
+        # options.add_argument("--headless")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+
         self.name = name
         self.url = url
         if latest_chapter_url == '':
@@ -38,11 +49,12 @@ class Manga:
     def retrieve_latest_chapter_url(self) -> str:
         """retrieve the latest chapter url number from the website
         """
-        scraper = cfscrape.create_scraper()
-        
-        website = scraper.get(self.url).content
+        self.driver.get(self.url)
+        time.sleep(10)
+        website = self.driver.page_source
         soup = BeautifulSoup(website, 'lxml')
         chapter = soup.find_all('tr')[-1].find_all('a')[-1].get('href')
+        self.driver.quit()
         return chapter
 
     def check_new_release(self) -> bool:
@@ -58,8 +70,7 @@ class Manga:
         file_path = self.folder + self.latest_chapter + '.zip'
         if not os.path.exists(self.folder):
             os.mkdir(self.folder)
-        scraper = cfscrape.create_scraper()
-        chapter = scraper.get(self.latest_chapter_url)
+        chapter = requests.get(self.latest_chapter_url)
         open(file_path, 'wb').write(chapter.content)
         current_path = sys.path[0]
         os.chdir(self.folder)

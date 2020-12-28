@@ -1,2 +1,4 @@
-cfscrape
-beautifulsoup4
+bs4
+lxml
+selenium
+webdriver-manager

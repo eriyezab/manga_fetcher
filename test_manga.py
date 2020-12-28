@@ -11,14 +11,14 @@ class TestManga(unittest.TestCase):
     def test_retrieve_latest_chapter_url(self):
         """make sure that the method retrieves the correct url
         """
-        NARUTO = Manga('Naruto', "https://w10.mangafreak.net/Manga/Naruto")
+        NARUTO = Manga('Naruto', "https://w11.mangafreak.net/Manga/Naruto", 'http://images.mangafreak.net:8080/downloads/Naruto_700')
         chapter = int(NARUTO.retrieve_latest_chapter_url()[-3:])
         self.assertEqual(chapter, 700)
 
     def test_check_new_release(self):
         """make sure that the method returns false
         """
-        NARUTO = Manga('Naruto', "https://w10.mangafreak.net/Manga/Naruto")
+        NARUTO = Manga('Naruto', "https://w11.mangafreak.net/Manga/Naruto", 'http://images.mangafreak.net:8080/downloads/Naruto_700')
         self.assertFalse(NARUTO.check_new_release())
 
 

@@ -1,0 +1,5 @@
+.DS_Store
+email_list.csv
+.venv/
+*.swp
+__pycache__/
